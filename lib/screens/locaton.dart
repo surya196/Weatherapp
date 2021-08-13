@@ -1,20 +1,47 @@
+import 'dart:js';
+
 import 'package:flutter/material.dart';
+import 'package:weatherapp/screens/city.dart';
+import 'package:weatherapp/services/weather.dart';
 
 import 'package:weatherapp/utilities/constant.dart';
 
 class LocationScreen extends StatefulWidget {
+  final locationdata;
+
+  LocationScreen(this.locationdata);
   @override
   _LocationScreenState createState() => _LocationScreenState();
 }
 
 class _LocationScreenState extends State<LocationScreen> {
+  WeatherModel weather = WeatherModel();
+  int? temperature;
+  String? condition;
+  String? cityname;
+
+  @override
+  void initState() {
+    super.initState();
+    update(widget.locationdata);
+  }
+
+  void update(dynamic data) {
+    setState(() {
+      temperature = weather.getMessage(data['main']['temp']) as int?;
+      condition = weather.getWeatherIcon(data['weather'][0]['id']);
+
+      cityname = data['name'];
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('images/location_background.jpg'),
+            image: AssetImage('images/images1.jpg'),
             fit: BoxFit.cover,
             colorFilter: ColorFilter.mode(
                 Colors.white.withOpacity(0.8), BlendMode.dstATop),
@@ -30,14 +57,26 @@ class _LocationScreenState extends State<LocationScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
                   FlatButton(
-                    onPressed: () {},
+                    onPressed: () async {
+                      var weatherdata = await weather.getweatherdata();
+                      update(weatherdata);
+                    },
                     child: Icon(
                       Icons.near_me,
                       size: 50.0,
                     ),
                   ),
                   FlatButton(
-                    onPressed: () {},
+                    onPressed: () async {
+                      var typedname = await Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                        return CityScreen();
+                      }));
+                      if(typedname!=null){
+                        var data=await weather.getcityname(typedname);
+                        update(data);
+                      }
+                    },
                     child: Icon(
                       Icons.location_city,
                       size: 50.0,
@@ -50,11 +89,11 @@ class _LocationScreenState extends State<LocationScreen> {
                 child: Row(
                   children: <Widget>[
                     Text(
-                      '32°',
+                      '$temperature',
                       style: kTempTextStyle,
                     ),
                     Text(
-                      '☀️',
+                      condition!,
                       style: kConditionTextStyle,
                     ),
                   ],
@@ -63,7 +102,7 @@ class _LocationScreenState extends State<LocationScreen> {
               Padding(
                 padding: EdgeInsets.only(right: 15.0),
                 child: Text(
-                  "It's 🍦 time in San Francisco!",
+                  '$temperature in $cityname',
                   textAlign: TextAlign.right,
                   style: kMessageTextStyle,
                 ),
